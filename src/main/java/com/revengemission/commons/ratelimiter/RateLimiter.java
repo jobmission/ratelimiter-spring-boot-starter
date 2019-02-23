@@ -35,7 +35,7 @@ public @interface RateLimiter {
      *
      * @return int
      */
-    int period() default 60;
+    int period() default 30;
 
     /**
      * 最多的访问限制次数
