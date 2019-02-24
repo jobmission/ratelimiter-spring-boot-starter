@@ -13,7 +13,7 @@ public @interface RateLimiter {
      *
      * @return String
      */
-    String prefix() default "limit_";
+    String prefix() default "ratelimiter_";
 
     /**
      * 模块的名字
@@ -38,16 +38,23 @@ public @interface RateLimiter {
     int period() default 30;
 
     /**
-     * 最多的访问限制次数
+     * 最多访问限制次数
      *
      * @return int
      */
-    int count() default 10;
+    int keyLimitCount() default 900;
 
     /**
-     * key是否包含IP
+     * 最多访问限制次数
      *
-     * @return boolean
+     * @return int
      */
-    boolean keyWithIP() default true;
+    int ipLimitCount() default 15;
+
+    /**
+     * 限速模式 0：key limit ,1:ip limit ,2:ip and key limit
+     *
+     * @return int
+     */
+    int limitType() default 1;
 }

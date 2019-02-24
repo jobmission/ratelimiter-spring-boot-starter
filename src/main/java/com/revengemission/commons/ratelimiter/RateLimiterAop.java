@@ -7,7 +7,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -25,51 +24,87 @@ public class RateLimiterAop {
 
     private static final Logger logger = LoggerFactory.getLogger(RateLimiterAop.class);
 
-    @Autowired
-    private RedisTemplate<String, Serializable> redisTemplate;
+    private static final String UNKNOWN = "unknown";
+
+    private RedisTemplate<String, Serializable> intRedisTemplate;
+
+    public RateLimiterAop() {
+    }
+
+    public RateLimiterAop(RedisTemplate<String, Serializable> intRedisTemplate) {
+        this.intRedisTemplate = intRedisTemplate;
+    }
 
     @Around("@annotation(com.revengemission.commons.ratelimiter.RateLimiter)")
-    public Object interceptor(ProceedingJoinPoint pjp) {
+    public Object interceptor(ProceedingJoinPoint pjp) throws Throwable, RateLimiterException {
 
         MethodSignature signature = (MethodSignature) pjp.getSignature();
         Method method = signature.getMethod();
         RateLimiter limitAnnotation = method.getAnnotation(RateLimiter.class);
         String project = limitAnnotation.project();
         String limitKey = limitAnnotation.key();
-        String limitIP = "";
+        String ip = "";
         int limitPeriod = limitAnnotation.period();
-        int limitCount = limitAnnotation.count();
-        if (limitAnnotation.keyWithIP()) {
-            limitIP = getIpAddress();
+        int keyLimitCount = limitAnnotation.keyLimitCount();
+        int ipLimitCount = limitAnnotation.ipLimitCount();
+        if (limitAnnotation.limitType() == 1 || limitAnnotation.limitType() == 2) {
+            ip = getIpAddress();
         }
 
-        List<String> keys = new ArrayList<>();
-        keys.add(StringUtils.join(limitAnnotation.prefix(), project, limitKey, limitIP));
-        try {
+        if (limitAnnotation.limitType() == 0) {
+            List<String> keys = new ArrayList<>();
+            keys.add(StringUtils.join(limitAnnotation.prefix(), project, limitKey));
             String luaScript = buildLuaScript();
-            RedisScript<Number> redisScript = new DefaultRedisScript<>(luaScript, Number.class);
-            Number count = redisTemplate.execute(redisScript, keys, limitCount, limitPeriod);
-            logger.debug("Try to access: project={} , key = {}, ip = {}, count = {}", project, limitKey, limitIP, count);
-            if (count != null && count.intValue() < limitCount) {
+            RedisScript<Number> redisScriptByKey = new DefaultRedisScript<>(luaScript, Number.class);
+            Number keyCount = intRedisTemplate.execute(redisScriptByKey, keys, keyLimitCount, limitPeriod);
+            logger.debug("Try to access: project={} , key = {}, count = {}", project, limitKey, keyCount);
+            if (keyCount != null && keyCount.intValue() < keyLimitCount) {
                 return pjp.proceed();
             } else {
                 throw new RateLimiterException("Triggered an abuse detection mechanism. " +
-                        "Please wait a few minutes before you try again. " + limitIP);
+                        "Please wait a few minutes before you try again. ", ip);
             }
-        } catch (Throwable e) {
-            if (e instanceof RuntimeException) {
-                throw new RuntimeException(e.getMessage(), e);
+        } else if (limitAnnotation.limitType() == 2) {
+            List<String> ipKeys = new ArrayList<>();
+            ipKeys.add(StringUtils.join(limitAnnotation.prefix(), project, limitKey, ip));
+            List<String> keyKeys = new ArrayList<>();
+            keyKeys.add(StringUtils.join(limitAnnotation.prefix(), project, limitKey));
+            String luaScript = buildLuaScript();
+
+            RedisScript<Number> redisScriptByKey = new DefaultRedisScript<>(luaScript, Number.class);
+            Number keyCount = intRedisTemplate.execute(redisScriptByKey, keyKeys, keyLimitCount, limitPeriod);
+            RedisScript<Number> redisScriptByIp = new DefaultRedisScript<>(luaScript, Number.class);
+            Number ipCount = intRedisTemplate.execute(redisScriptByIp, ipKeys, ipLimitCount, limitPeriod);
+            logger.debug("Try to access: project={} , key = {}, ip = {}, count = {}", project, limitKey, ip, ipCount);
+            if (ipCount != null && ipCount.intValue() < ipLimitCount && keyCount != null && keyCount.intValue() < keyLimitCount) {
+                return pjp.proceed();
+            } else {
+                throw new RateLimiterException("Triggered an abuse detection mechanism. " +
+                        "Please wait a few minutes before you try again. ", ip);
             }
-            throw new RuntimeException(e.getMessage(), e);
+        } else {
+            List<String> keys = new ArrayList<>();
+            keys.add(StringUtils.join(limitAnnotation.prefix(), project, limitKey, ip));
+            String luaScript = buildLuaScript();
+            RedisScript<Number> redisScriptByIp = new DefaultRedisScript<>(luaScript, Number.class);
+            Number ipCount = intRedisTemplate.execute(redisScriptByIp, keys, ipLimitCount, limitPeriod);
+            logger.debug("Try to access: project={} , key = {}, ip = {}, count = {}", project, limitKey, ip, ipCount);
+            if (ipCount != null && ipCount.intValue() < ipLimitCount) {
+                return pjp.proceed();
+            } else {
+                throw new RateLimiterException("Triggered an abuse detection mechanism. " +
+                        "Please wait a few minutes before you try again. ", ip);
+            }
         }
+
     }
 
     /**
-     * 限流 脚本
+     * 限流 脚本 lua脚本
      *
-     * @return lua脚本
+     * @return String
      */
-    public String buildLuaScript() {
+    private String buildLuaScript() {
         StringBuilder lua = new StringBuilder();
         lua.append("local c\n");
         lua.append("c = redis.call('get',KEYS[1])\n");
@@ -87,9 +122,7 @@ public class RateLimiterAop {
         return lua.toString();
     }
 
-    private static final String UNKNOWN = "unknown";
-
-    public String getIpAddress() {
+    private String getIpAddress() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String ip = request.getHeader("x-forwarded-for");
         if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {

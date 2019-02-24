@@ -1,12 +1,12 @@
 
-## SpringBoot 2.x, api request rate limiter based on redis
+## SpringBoot 2.1.x, api request rate limiter based on redis
 
 # 1. 添加依赖
 ````
         <dependency>
             <groupId>com.revengemission.commons</groupId>
             <artifactId>ratelimiter-spring-boot-starter</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.2</version>
         </dependency>
         
         <dependency>
@@ -21,14 +21,14 @@
 ````
 # 2. application.properties 中添加配置
 ````
-rate.limiter.host=
-rate.limiter.port=
-rate.limiter.password=
+spring.redis.host=
+spring.redis.port=
+spring.redis.password=
 ````
 # 3. Controller的方法上添加注解 @RateLimiter
 ````
     @RateLimiter
-    @RequestMapping("/")
+    @GetMapping("/")
     public String index(Model model) {
         return "index";
     }

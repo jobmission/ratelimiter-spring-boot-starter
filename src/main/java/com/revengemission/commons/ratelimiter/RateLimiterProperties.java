@@ -2,7 +2,7 @@ package com.revengemission.commons.ratelimiter;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties("rate.limiter")
+@ConfigurationProperties("spring.redis")
 public class RateLimiterProperties {
     private String host;
     private int port;
