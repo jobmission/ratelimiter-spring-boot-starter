@@ -4,8 +4,8 @@ import java.lang.annotation.*;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@Inherited
 @Documented
+@Repeatable(RateLimiters.class)
 public @interface RateLimiter {
 
     /**
