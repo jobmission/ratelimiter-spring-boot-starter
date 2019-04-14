@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.revengemission.commons</groupId>
 	<artifactId>ratelimiter-spring-boot-starter</artifactId>
-	<version>0.3-SNAPSHOT</version>
+	<version>0.3</version>
 	<packaging>jar</packaging>
 	<name>rate limiter spring-boot-starter</name>
 	<description>api request rate limiter based on redis</description>

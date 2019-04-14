@@ -11,9 +11,8 @@ public class RateLimiterException extends RuntimeException {
         this.ip = ip;
     }
 
-    public RateLimiterException(String ip) {
-        super();
-        this.ip = ip;
+    public RateLimiterException(String message) {
+        super(message);
     }
 
     public RateLimiterException(String message, String ip) {

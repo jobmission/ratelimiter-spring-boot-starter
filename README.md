@@ -6,7 +6,7 @@
         <dependency>
             <groupId>com.revengemission.commons</groupId>
             <artifactId>ratelimiter-spring-boot-starter</artifactId>
-            <version>0.2</version>
+            <version>0.3</version>
         </dependency>
         
         <dependency>

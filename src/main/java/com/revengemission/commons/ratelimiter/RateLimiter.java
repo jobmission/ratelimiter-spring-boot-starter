@@ -52,9 +52,9 @@ public @interface RateLimiter {
     int ipLimitCount() default 15;
 
     /**
-     * 限速模式 0：key limit ,1:ip limit ,2:ip and key limit
+     * 限速模式
      *
      * @return int
      */
-    int limitType() default 1;
+    LimiterMode limitMode() default LimiterMode.IP;
 }
