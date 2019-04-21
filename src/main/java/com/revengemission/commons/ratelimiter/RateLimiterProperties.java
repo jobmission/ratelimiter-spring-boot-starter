@@ -4,8 +4,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("spring.redis")
 public class RateLimiterProperties {
-    private String host;
-    private int port;
+    private String host = "localhost";
+    private int port = 6379;
     private String password;
 
     public String getHost() {

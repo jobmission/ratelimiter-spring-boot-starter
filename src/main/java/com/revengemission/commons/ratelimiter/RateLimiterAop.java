@@ -1,8 +1,8 @@
 package com.revengemission.commons.ratelimiter;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,25 +27,21 @@ public class RateLimiterAop {
 
     private RedisTemplate<String, Serializable> intRedisTemplate;
 
-    public RateLimiterAop() {
-    }
-
     public RateLimiterAop(RedisTemplate<String, Serializable> intRedisTemplate) {
         this.intRedisTemplate = intRedisTemplate;
     }
 
-    @Around("@annotation(com.revengemission.commons.ratelimiter.RateLimiter)")
-    public Object interceptor(ProceedingJoinPoint pjp) throws Throwable, RateLimiterException {
 
-        MethodSignature signature = (MethodSignature) pjp.getSignature();
+    @Before("@annotation(com.revengemission.commons.ratelimiter.RateLimiter)")
+    public void interceptor(JoinPoint joinPoint) throws RateLimiterException {
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
-        Object[] args = pjp.getArgs();
+        Object[] args = joinPoint.getArgs();
         RateLimiter[] limitAnnotations = method.getAnnotationsByType(RateLimiter.class);
 
         boolean limitFlag = false;
         for (RateLimiter limitAnnotation : limitAnnotations) {
             String project = limitAnnotation.project();
-            // TODO support SpEL
             String limitKeySpEL = limitAnnotation.key();
             String limitKey = SpELUtil.parse(limitKeySpEL, method, args);
             String ip = "";
@@ -102,9 +98,7 @@ public class RateLimiterAop {
             }
         }
 
-        if (!limitFlag) {
-            return pjp.proceed();
-        } else {
+        if (limitFlag) {
             throw new RateLimiterException(
                     "Triggered an abuse detection mechanism. " + "Please wait a few minutes before you try again. ");
         }
