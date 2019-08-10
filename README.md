@@ -1,23 +1,13 @@
 
-## SpringBoot 2.1.x, api request rate limiter based on redis
+## SpringBoot 2.1.x, api request rate limiter based on redis,漏斗桶
 
 # 1. 添加依赖
 ````
         <dependency>
             <groupId>com.revengemission.commons</groupId>
             <artifactId>ratelimiter-spring-boot-starter</artifactId>
-            <version>0.3</version>
-        </dependency>
-        
-        <dependency>
-             <groupId>org.springframework.data</groupId>
-             <artifactId>spring-data-redis</artifactId>
-         </dependency>
- 
-         <dependency>
-             <groupId>io.lettuce</groupId>
-             <artifactId>lettuce-core</artifactId>
-         </dependency>       
+            <version>0.4-SNAPSHOT</version>
+        </dependency>      
 ````
 # 2. application.properties 中添加配置
 ````

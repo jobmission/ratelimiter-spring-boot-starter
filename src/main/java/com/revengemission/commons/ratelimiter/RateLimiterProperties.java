@@ -2,6 +2,9 @@ package com.revengemission.commons.ratelimiter;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * @author wzhang
+ */
 @ConfigurationProperties("spring.redis")
 public class RateLimiterProperties {
     private String host = "localhost";

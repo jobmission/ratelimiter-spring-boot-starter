@@ -10,12 +10,18 @@ import java.lang.reflect.Method;
 
 /**
  * 解析SPEL 表达式
+ *
+ * @author wzhang
  */
-public class SpELUtil {
-    // 获取被拦截方法参数名列表(使用Spring支持类库)
-    static LocalVariableTableParameterNameDiscoverer discoverer = new LocalVariableTableParameterNameDiscoverer();
-    // 使用SPEL进行key的解析
-    static ExpressionParser parser = new SpelExpressionParser();
+public class SpelUtil {
+    /**
+     * 获取被拦截方法参数名列表(使用Spring支持类库)
+     */
+    private static LocalVariableTableParameterNameDiscoverer discoverer = new LocalVariableTableParameterNameDiscoverer();
+    /**
+     * 使用SPEL进行key的解析
+     */
+    private static ExpressionParser parser = new SpelExpressionParser();
 
     public static String parse(String spel, Method method, Object[] args) {
         // 获取被拦截方法参数名列表(使用Spring支持类库)

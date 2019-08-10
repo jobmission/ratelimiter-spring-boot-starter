@@ -18,6 +18,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author wzhang
+ */
 @Aspect
 public class RateLimiterAop {
 
@@ -42,8 +45,8 @@ public class RateLimiterAop {
         boolean limitFlag = false;
         for (RateLimiter limitAnnotation : limitAnnotations) {
             String project = limitAnnotation.project();
-            String limitKeySpEL = limitAnnotation.key();
-            String limitKey = SpELUtil.parse(limitKeySpEL, method, args);
+            String limitKeySpel = limitAnnotation.key();
+            String limitKey = SpelUtil.parse(limitKeySpel, method, args);
             String ip = "";
             int limitPeriod = limitAnnotation.period();
             int keyLimitCount = limitAnnotation.keyLimitCount();
@@ -75,9 +78,9 @@ public class RateLimiterAop {
                 RedisScript<Number> redisScriptByIp = new DefaultRedisScript<>(luaScript, Number.class);
                 Number ipCount = intRedisTemplate.execute(redisScriptByIp, ipKeys, limitPeriod);
                 logger.debug("Try to access: project={} , key = {}, ip = {}, count = {}", project, limitKey, ip,
-                        ipCount);
-                if ((ipCount != null && ipCount.intValue() > ipLimitCount)
-                        || (keyCount != null && keyCount.intValue() > keyLimitCount)) {
+                    ipCount);
+                boolean checkFlag = (ipCount != null && ipCount.intValue() > ipLimitCount) || (keyCount != null && keyCount.intValue() > keyLimitCount);
+                if (checkFlag) {
                     limitFlag = true;
                     break;
                 }
@@ -88,7 +91,7 @@ public class RateLimiterAop {
                 RedisScript<Number> redisScriptByIp = new DefaultRedisScript<>(luaScript, Number.class);
                 Number ipCount = intRedisTemplate.execute(redisScriptByIp, keys, limitPeriod);
                 logger.info("Try to access: project={} , key = {}, ip = {}, count = {}", project, limitKey, ip,
-                        ipCount);
+                    ipCount);
                 if (ipCount != null && ipCount.intValue() > ipLimitCount) {
                     System.out.println("ipCount:" + ipCount);
                     System.out.println("ipLimitCount:" + ipLimitCount);
@@ -100,7 +103,7 @@ public class RateLimiterAop {
 
         if (limitFlag) {
             throw new RateLimiterException(
-                    "Triggered an abuse detection mechanism. " + "Please wait a few minutes before you try again. ");
+                "Triggered an abuse detection mechanism. " + "Please wait a few minutes before you try again. ");
         }
 
     }
@@ -126,7 +129,7 @@ public class RateLimiterAop {
 
     private String getIpAddress() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                .getRequest();
+            .getRequest();
         String ip = request.getHeader("x-forwarded-for");
         if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");

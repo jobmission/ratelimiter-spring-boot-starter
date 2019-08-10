@@ -2,6 +2,9 @@ package com.revengemission.commons.ratelimiter;
 
 import java.security.AccessControlException;
 
+/**
+ * @author wzhang
+ */
 public class RateLimiterException extends AccessControlException {
     private String ip;
 

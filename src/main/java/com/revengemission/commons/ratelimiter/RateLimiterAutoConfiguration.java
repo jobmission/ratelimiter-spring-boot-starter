@@ -16,6 +16,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.io.Serializable;
 
+/**
+ * @author wzhang
+ */
 @Configuration
 @EnableConfigurationProperties(RateLimiterProperties.class)
 @AutoConfigureAfter(RedisAutoConfiguration.class)
